@@ -1,0 +1,225 @@
+class Square:
+    def __init__(self, i, li, j, lj=1):
+        self.active = True
+        # перый знак по строке
+        self.i = i
+        # ширина по строке
+        self.li = li
+        # первый знак по высоте
+        self.j = j
+        # высота
+        self.lj = lj
+
+    def close(self):
+        self.active = False
+
+    def add_if_can(self, i, li, rnow):
+        if(rnow == self.j + self.lj and i == self.i and li == self.li):
+            self.lj+=1
+            return True
+        else:
+            self.active = False
+            return False
+
+class Square_list:
+    def __init__(self, n, m):
+        self.squars = []
+        self.n = n
+        self.m = m
+        self.pic = []
+
+    def add_row_square(self, i, li, rnow):
+        cannot_add=True
+        for sq_item in self.squars:
+            if not sq_item.active:
+                continue
+            res = sq_item.add_if_can(i, li, rnow)
+            if(not res):
+                sq_item.active = False
+            else:
+                cannot_add = False
+        if(cannot_add):
+            self.add_square(i, li, rnow)
+
+    def add_square(self, i, li, rnow):
+        self.squars.append(Square(i, li, rnow))
+
+    def add_str(self, st):
+        prev = '.'
+        start = -1
+        len_now = 0
+        for i in range(len(st)):
+            b = st[i]
+            if(prev =='.'):
+                len_now = 0
+                if(b=='#'):
+                    start = i
+            if(prev == '#'):
+                len_now = i - start
+                if(b == '.'):
+                    self.add_row_square(start, i-start, j)
+                    start = -1
+            prev = b
+        if(prev == '#'):
+            # print('prev')
+            self.add_row_square(start, len_now+1, j)
+
+    def get_result(self):
+        if len(self.squars) == 0 or len(self.squars) > 3:
+            return False
+        if len(self.squars) == 2:
+            res = self.paint_squars(self.squars[0], self.squars[1])
+            return res
+        if len(self.squars) == 1:
+            sq = self.squars[0]
+            # print(sq.li, sq.lj)
+            if(sq.li > 1):
+                self.paint_squars(Square(sq.i,1, sq.j, sq.lj),Square(sq.i+1,sq.li-1, sq.j, sq.lj))
+                return True
+            elif(sq.lj > 1):
+                self.paint_squars(Square(sq.i,sq.li, sq.j, 1),Square(sq.i,sq.li, sq.j+1, sq.lj-1))
+                return True
+            else:
+                return False
+            
+        # количество прямоугольников равно трем
+        self.squars.sort(key=lambda sq: sq.j)
+        if(self.squars[0].j+self.squars[0].lj != self.squars[1].j):
+            return False
+        if(self.squars[1].j+self.squars[1].lj != self.squars[2].j):
+            return False
+        
+
+        # print(self.squars[0].i, self.squars[2].i, self.squars[0].li, self.squars[2].li)
+        if(self.squars[0].i == self.squars[2].i and self.squars[0].li == self.squars[2].li):
+            # print('Основная ветка')
+            if(self.squars[0].i == self.squars[1].i):
+                self.paint_squars(
+                Square(
+                    self.squars[0].i,
+                    self.squars[0].li,
+                    self.squars[0].j,
+                    self.squars[0].lj+self.squars[1].lj+self.squars[2].lj
+                    ),
+                Square(
+                    self.squars[2].i+self.squars[2].li,
+                    self.squars[1].li-self.squars[2].li,
+                    self.squars[1].j,
+                    self.squars[1].lj
+                    )
+                )
+                return True
+            
+            # print(self.squars[0].i, self.squars[0].li,self.squars[1].i, self.squars[1].li)
+            if(self.squars[0].i+self.squars[0].li == self.squars[1].i+self.squars[1].li):
+                self.paint_squars(
+                Square(
+                    self.squars[0].i,
+                    self.squars[0].li,
+                    self.squars[0].j,
+                    self.squars[0].lj+self.squars[1].lj+self.squars[2].lj
+                    ),
+                Square(
+                    self.squars[1].i,
+                    self.squars[1].li-self.squars[2].li,
+                    self.squars[1].j,
+                    self.squars[1].lj
+                    )
+                )
+                return True
+        if(self.squars[1].li != self.squars[0].li + self.squars[2].li):
+            return False
+        
+        if((self.squars[0].i == self.squars[1].i and self.squars[2].i+self.squars[2].li == self.squars[1].i+self.squars[1].li) or
+           (self.squars[2].i == self.squars[2].i and self.squars[0].i+self.squars[0].li == self.squars[1].i+self.squars[1].li)):
+            # print(f"a {self.squars[0].j} - {self.squars[0].lj+self.squars[1].j}")
+            # print(f"b {self.squars[2].j} - {self.squars[2].lj+self.squars[1].j}")
+            self.paint_squars(
+                Square(
+                    self.squars[0].i,
+                    self.squars[0].li,
+                    self.squars[0].j,
+                    self.squars[0].lj+self.squars[1].lj+self.squars[0].j
+                    ),
+                    Square(
+                    self.squars[2].i,
+                    self.squars[2].li,
+                    self.squars[2].j-self.squars[1].lj,
+                    self.squars[1].lj+self.squars[2].lj
+                    )
+            )
+            return True
+        
+        
+            
+        return False
+        
+    def print_result(self):
+        res = self.get_result()
+        # print(f"высота {len(self.pic)}")
+        # print(f'ширина {len(self.pic[0])}')
+        if(res == False):
+            print('NO')
+        else:
+            print('YES')
+            for p in self.pic:
+                print(p)
+        
+    def paint_squars(self, sq1, sq2):
+        s1 = {
+            'i': sq1.i,
+            'li': sq1.li,
+            'j': sq1.j,
+            'lj': sq1.lj
+        }
+
+        s2 = {
+            'i': sq2.i,
+            'li': sq2.li,
+            'j': sq2.j,
+            'lj': sq2.lj
+        }
+        return self.paint(s1, s2)
+    
+    def paint(self, s1, s2):
+        s1i = s1['i']
+        s1li = s1['li']
+        s1j = s1['j']
+        s1lj = s1['lj']
+
+        s2i = s2['i']
+        s2li = s2['li']
+        s2j = s2['j']
+        s2lj = s2['lj']
+        k = []
+        for j in range(self.m):
+            # print(f'строка {j} Границы в высоту а: {s1j}, {s1j+s1lj}.Границы b: {s2j}, {s2j+s2lj}')
+            if((j>=s1j and j<s1j+s1lj) or (j>=s2j and j<s2j+s2lj)):
+                krow = ''
+                for i in range(self.n):
+                    # print(f"столбец {i}, в ширину а: {s1i}, {s1i+s1li}.Границы b: {s2i}, {s2i+s2li}")
+                    if(i>=s1i and i<s1i+s1li and j>=s1j and j<s1j+s1lj):
+                        krow+='a'
+                    elif(i>=s2i and i<s2i+s2li and j>=s2j and j<s2j+s2lj):
+                        krow+='b'
+                    else:
+                        krow+='.'
+                k.append(krow)
+
+            else:
+                krow = ''
+                for j in range(n):
+                    krow += '.'
+                k.append(krow)
+
+        self.pic = k
+        return True
+
+m, n = [int(i) for i in input().split()]
+square_list = Square_list(n, m)
+
+for j in range(m):
+    st = input()
+    square_list.add_str(st)
+    
+square_list.print_result()
